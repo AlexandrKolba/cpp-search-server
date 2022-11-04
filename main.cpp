@@ -93,7 +93,7 @@ public:
     template <typename T>
     explicit SearchServer(const T& stop_words) : stop_words_(NoEmpty(stop_words))
     {
-        for (auto &word : stop_words_)
+        for (auto &word : stop_words_) // исправил информативное имя переменной
         {
             if (!IsValidWord(word))
             {
@@ -122,7 +122,7 @@ public:
             {
                 throw invalid_argument("Error add document to word");
             }
-            word_to_document_freqs_[word][document_id] += inv_word_count;
+            word_to_document_freqs_[word][document_id] += inv_word_count; // исправил добавление после проверки
         }
         num_id.push_back(document_id);
         documents_.emplace(document_id, DocumentData{ ComputeAverageRating(ratings), status });
@@ -166,6 +166,8 @@ public:
 
     vector<Document> FindTopDocuments(const string& raw_query, DocumentStatus status) const
     {
+        // исправил удалил лишние проверки
+        
         return FindTopDocuments(raw_query, [status](int document_id, DocumentStatus _status, int /*rating*/)
             {
                 return  status == _status;
@@ -174,6 +176,8 @@ public:
 
     vector<Document> FindTopDocuments(const string& raw_query) const
     {
+        // исправил удалил лишние проверки
+        
         return FindTopDocuments(raw_query, DocumentStatus::ACTUAL);
     }
 
@@ -309,7 +313,7 @@ private:
     {
         for (const string& word : SplitIntoWords(text)) 
         {
-            if (word == "-")
+            if (word == "-") // исправил перенес проверку сюда)
             {
                 return false;
             }
