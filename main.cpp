@@ -90,14 +90,12 @@ enum class DocumentStatus {
 
 class SearchServer {
 public:
-    inline static constexpr int INVALID_DOCUMENT_ID = -1;
-
     template <typename T>
     explicit SearchServer(const T& stop_words) : stop_words_(NoEmpty(stop_words))
     {
-        for (auto s : stop_words_)
+        for (auto &word : stop_words_)
         {
-            if (!IsValidWord(s))
+            if (!IsValidWord(word))
             {
                 throw invalid_argument("Error to constructor");
             }
@@ -120,11 +118,11 @@ public:
 
         for (const string& word : words)
         {
-            word_to_document_freqs_[word][document_id] += inv_word_count;
             if (!IsValidWord(word))
             {
                 throw invalid_argument("Error add document to word");
             }
+            word_to_document_freqs_[word][document_id] += inv_word_count;
         }
         num_id.push_back(document_id);
         documents_.emplace(document_id, DocumentData{ ComputeAverageRating(ratings), status });
@@ -135,67 +133,39 @@ public:
         return documents_.size();
     }
 
-    static bool QueryCheck(const string& raw_query) {
-
-        for (const auto& word : SplitIntoWords(raw_query))
-        {
-            if (word[word.size() - 1] == '-' || word == "-")
-            {
-                return false;
-            }
-
-            if (word[0] == '-' && word[1] == '-')
-            {
-                return false;
-            }
-
-            if (!IsValidWord(word)) {
-                return false;
-            }
-
-        }
-        return true;
-
-    }
-
     template <typename T>
     vector<Document> FindTopDocuments(const string& raw_query, T predicate) const
     {
-        if (!QueryCheck(raw_query))
+        Query query;
+        if (!ParseQuery(raw_query, query))
         {
-             throw invalid_argument("Error FindTopDocuments");
+            throw invalid_argument("Error to FindTopDocuments oops...");
         }
-            
-        const Query query = ParseQuery(raw_query);
+
         auto matched_documents = FindAllDocuments(query, predicate);
 
         sort(matched_documents.begin(), matched_documents.end(),
-             [](const Document& lhs, const Document& rhs)
-             {
+            [](const Document& lhs, const Document& rhs)
+            {
                 if (abs(lhs.relevance - rhs.relevance) < EPSILON)
                 {
-                     return lhs.rating > rhs.rating;
+                    return lhs.rating > rhs.rating;
                 }
                 else
                 {
                     return lhs.relevance > rhs.relevance;
                 }
-         });
+            });
 
-         if (matched_documents.size() > MAX_RESULT_DOCUMENT_COUNT)
-         {
-                matched_documents.resize(MAX_RESULT_DOCUMENT_COUNT);
-         }
-         return matched_documents;
+        if (matched_documents.size() > MAX_RESULT_DOCUMENT_COUNT)
+        {
+            matched_documents.resize(MAX_RESULT_DOCUMENT_COUNT);
+        }
+        return matched_documents;
     }
 
     vector<Document> FindTopDocuments(const string& raw_query, DocumentStatus status) const
     {
-        if (!QueryCheck(raw_query))
-        {
-            throw invalid_argument("Error Find documents to word");
-        }
-
         return FindTopDocuments(raw_query, [status](int document_id, DocumentStatus _status, int /*rating*/)
             {
                 return  status == _status;
@@ -204,24 +174,18 @@ public:
 
     vector<Document> FindTopDocuments(const string& raw_query) const
     {
-        if (!QueryCheck(raw_query))
-        {
-            throw invalid_argument("Error Find documents to word");
-
-        }
-
         return FindTopDocuments(raw_query, DocumentStatus::ACTUAL);
     }
 
 
     tuple<vector<string>, const DocumentStatus> MatchDocument(const string& raw_query, int document_id) const
     {
-        if (!QueryCheck(raw_query))
+        Query query;
+        if (!ParseQuery(raw_query, query))
         {
-            throw invalid_argument("Error MatshDocument");
+            throw invalid_argument("Error to Match Document oops...");
         }
 
-        const Query query = ParseQuery(raw_query);
         vector<string> matched_words;
 
         for (const string& word : query.plus_words)
@@ -240,7 +204,7 @@ public:
             if (word_to_document_freqs_.count(word) == 0) {
                 continue;
             }
-            if (word_to_document_freqs_.at(word).count(document_id) || !MinusWord(query.minus_words)) {
+            if (word_to_document_freqs_.at(word).count(document_id) || !IsMinusWord(query.minus_words)) {
                 matched_words.clear();
                 break;
             }
@@ -255,7 +219,6 @@ public:
         if (i < 0 || i > GetDocumentCount())
         {
             throw out_of_range("Error: ID < 0 or ID > count documents");
-            //return INVALID_DOCUMENT_ID;
         }
         return num_id[i];
     }
@@ -299,7 +262,7 @@ private:
             });
     }
 
-    static bool MinusWord(const set<string>& query_minus_word)
+    static bool IsMinusWord(const set<string>& query_minus_word)
     {
         for (auto& word : query_minus_word)
         {
@@ -342,20 +305,41 @@ private:
         set<string> minus_words;
     };
 
-    Query ParseQuery(const string& text) const {
-        Query query;
-        for (const string& word : SplitIntoWords(text)) {
+    bool ParseQuery(const string& text, Query &return_query) const 
+    {
+        for (const string& word : SplitIntoWords(text)) 
+        {
+            if (word == "-")
+            {
+                return false;
+            }
+
+            if (word[0] == '-' && word[1] == '-')
+            {
+                return false;
+            }
+
+            if (!IsValidWord(word)) 
+            {
+                return false;
+            }
+
             const QueryWord query_word = ParseQueryWord(word);
-            if (!query_word.is_stop) {
-                if (query_word.is_minus) {
-                    query.minus_words.insert(query_word.data);
+
+            if (!query_word.is_stop) 
+            {
+                if (query_word.is_minus) 
+                {
+                    return_query.minus_words.insert(query_word.data);
                 }
-                else {
-                    query.plus_words.insert(query_word.data);
+                else 
+                {
+                    return_query.plus_words.insert(query_word.data);
                 }
             }
         }
-        return query;
+
+        return true;
     }
 
     // Existence required
