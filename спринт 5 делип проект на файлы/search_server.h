@@ -6,6 +6,8 @@
 #include "document.h"
 #include "string_processing.h"
 
+const double EPSILON = 1e-6;
+
 class SearchServer {
 public:
 
@@ -85,7 +87,7 @@ std::vector<Document> SearchServer::FindTopDocuments(const std::string& raw_quer
     auto matched_documents = FindAllDocuments(query, document_predicate);
 
     sort(matched_documents.begin(), matched_documents.end(), [](const Document& lhs, const Document& rhs) {
-        if (std::abs(lhs.relevance - rhs.relevance) < 1e-6) {
+        if (std::abs(lhs.relevance - rhs.relevance) < EPSILON) {
             return lhs.rating > rhs.rating;
         }
         else {
