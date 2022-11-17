@@ -709,5 +709,5 @@ std::set<std::string> MakeUniqueNonEmptyStrings(const StringContainer& strings)
     }
     return non_empty_strings;
 }
-// end file search_server.h
+// end file string_processing.h
 //---------------------------------------------------------------------------------------
