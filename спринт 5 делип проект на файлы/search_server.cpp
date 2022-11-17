@@ -87,13 +87,13 @@ std::vector<std::string> SearchServer::SplitIntoWordsNoStop(const std::string& t
     return words;
 }
 
-int SearchServer::ComputeAverageRating(const std::vector<int>& ratings) {
+int SearchServer::ComputeAverageRating(const std::vector<int>& ratings) 
+{
     if (ratings.empty()) {
         return 0;
     }
-    int rating_sum = std::accumulate(ratings.begin(),ratings.end(),0);
     
-    return rating_sum / static_cast<int>(ratings.size());
+    return std::accumulate(ratings.begin(),ratings.end(),0) / static_cast<int>(ratings.size());
 }
 
 SearchServer::QueryWord SearchServer::ParseQueryWord(const std::string& text) const {
