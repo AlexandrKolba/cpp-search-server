@@ -1,4 +1,5 @@
 #include <cmath>
+#include <numeric>
 
 #include "search_server.h"
 
@@ -90,10 +91,8 @@ int SearchServer::ComputeAverageRating(const std::vector<int>& ratings) {
     if (ratings.empty()) {
         return 0;
     }
-    int rating_sum = 0;
-    for (const int rating : ratings) {
-        rating_sum += rating;
-    }
+    int rating_sum = std::accumulate(ratings.begin(),ratings.end(),0);
+    
     return rating_sum / static_cast<int>(ratings.size());
 }
 
