@@ -52,7 +52,6 @@ public:
     {
         if (documents_.count(document_id) != 0) 
         {
-            // собираем вектор слов документа
             std::vector<std::string> words(document_to_word_freqs_.at(document_id).size());
             std::transform(document_to_word_freqs_.at(document_id).begin(),
                 document_to_word_freqs_.at(document_id).end(), words.begin(), [](auto& word)
