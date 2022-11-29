@@ -60,14 +60,12 @@ public:
                     return word.first;
                 });
 
-            // удаляем слова (можно распараллелить потому что из каждого словаря удалится максимум одна запись)
             std::for_each( words.begin(), words.end(), [this, document_id](auto& word_view) 
             {
                     word_to_document_freqs_.find(word_view)->second.erase(document_id);
              });
 
-            // подчищаем в словаре слова, которые остались без документов
-            // (нельзя распараллелить, потому что удаляются записи в одном словаре)
+
             std::for_each(words.begin(), words.end(), [this, document_id](auto& word_view) {
                 auto it = word_to_document_freqs_.find(word_view);
                 if (it->second.empty()) 
